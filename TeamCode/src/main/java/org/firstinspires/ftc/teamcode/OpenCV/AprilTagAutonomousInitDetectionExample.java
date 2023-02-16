@@ -112,14 +112,9 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
         telemetry.setMsTransmissionInterval(50);
 
 
-
-        // Initialize the drive system variables.
         leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
 
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
@@ -191,12 +186,6 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
             sleep(20);
         }
 
-        /*
-         * The START command just came in: now work off the latest snapshot acquired
-         * during the init loop.
-         */
-
-        /* Update the telemetry */
         if(tagOfInterest != null)
         {
             telemetry.addLine("Tag snapshot:\n");
@@ -211,81 +200,34 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
 
 
 
-
-
-        /* Actually do something useful */
-
-
-
-
-        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
         while (opModeIsActive()) {
-            //sleep(20);
             if(tagOfInterest == null || tagOfInterest.id == Left){
-                // Step 2:  Spin right for 1.3 seconds
-                leftDrive.setPower(-TURN_SPEED);
-                rightDrive.setPower(TURN_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 1.3)) {
-                    telemetry.addData("Path", "Leg 2: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
-
-                // Step 1:  Drive forward for 3 seconds
-                leftDrive.setPower(FORWARD_SPEED);
-                rightDrive.setPower(FORWARD_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
-
+                move(-TURN_SPEED,TURN_SPEED,1.3);
+                //move(FORWARD_SPEED,FORWARD_SPEED,3.0);
                 break;
             }
             else if(tagOfInterest.id == Middle){
 
-                // Step 1:  Drive forward for 3 seconds
-                leftDrive.setPower(FORWARD_SPEED);
-                rightDrive.setPower(FORWARD_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
+                move(FORWARD_SPEED,FORWARD_SPEED,3.0);
                 break;
             }
             else if (tagOfInterest.id == Right){
-                // Step 2:  Spin right for 1.3 seconds
-                leftDrive.setPower(TURN_SPEED);
-                rightDrive.setPower(-TURN_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 1.3)) {
-                    telemetry.addData("Path", "Leg 2: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
-
-//                leftDrive.setPower(FORWARD_SPEED);
-//                rightDrive.setPower(FORWARD_SPEED);
-//                runtime.reset();
-//                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-//                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-//                    telemetry.update();
-//                }
-
-                forward();
+                move(TURN_SPEED,-TURN_SPEED,1.3);
+                move(FORWARD_SPEED,FORWARD_SPEED,3.0);
                 break;
             }
         }
     }
 
-    private void forward() {
-        leftDrive.setPower(FORWARD_SPEED);
-        rightDrive.setPower(FORWARD_SPEED);
+    private void move(double leftSpeed,double rightSpeed, double seconds){
+        leftDrive.setPower(leftSpeed);
+        rightDrive.setPower(rightSpeed);
         runtime.reset();
-        while (opModeIsActive() && (runtime.seconds() < 3.0)) {
+        while (opModeIsActive() && (runtime.seconds() < seconds)) {
             telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
             telemetry.update();
         }
+
     }
 
     @SuppressLint("DefaultLocale")
