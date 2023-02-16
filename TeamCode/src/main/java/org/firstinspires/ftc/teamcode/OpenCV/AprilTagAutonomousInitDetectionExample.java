@@ -264,19 +264,27 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
                     telemetry.update();
                 }
 
-                // Step 1:  Drive forward for 3 seconds
-                leftDrive.setPower(FORWARD_SPEED);
-                rightDrive.setPower(FORWARD_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
+//                leftDrive.setPower(FORWARD_SPEED);
+//                rightDrive.setPower(FORWARD_SPEED);
+//                runtime.reset();
+//                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
+//                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
+//                    telemetry.update();
+//                }
+
+                forward();
                 break;
             }
+        }
+    }
 
-
-
+    private void forward() {
+        leftDrive.setPower(FORWARD_SPEED);
+        rightDrive.setPower(FORWARD_SPEED);
+        runtime.reset();
+        while (opModeIsActive() && (runtime.seconds() < 3.0)) {
+            telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
+            telemetry.update();
         }
     }
 
