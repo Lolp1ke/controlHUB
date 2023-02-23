@@ -17,8 +17,7 @@ public class Robot extends OpMode {
     public Servo handServo = null;
 
     double wheelReducter = 0.6;
-    double armReducter = 0.6;
-
+    double armReducter = 1;
 
     private void drive() {
         double leftWheel = -gamepad1.left_stick_y * wheelReducter;

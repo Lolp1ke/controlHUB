@@ -45,7 +45,6 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
     private DcMotor leftDrive = null;
     private DcMotor rightDrive = null;
-
     private DcMotor armMotor = null;
     private Servo hand_servo = null;
     private ElapsedTime runtime = new ElapsedTime();
@@ -53,6 +52,8 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
     static final double FORWARD_SPEED = 0.6;
     static final double TURN_SPEED = 0.5;
     static final double FEET_PER_METER = 3.28084;
+    static final int MAX_ARM_POSITION = 2000;
+    static final int ARM_POS_OFFSET = 100;
     double fx = 578.272;
     double fy = 578.272;
     double cx = 402.145;
@@ -160,8 +161,6 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
 //                    encoderDrive(FORWARD_SPEED, 1.8, 1.8, 5);
 //                    encoderDrive(TURN_SPEED, -1, 1, 5);
 //                    encoderDrive(FORWARD_SPEED, 0.4, 0.4, 5);
-
-                    arm(2);
                     break;
                 } else if (tagOfInterest.id == Middle) {
                     encoderDrive(FORWARD_SPEED, 1.5, 1.5, 5);
@@ -174,7 +173,7 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
                 }
             }
 
-            arm(2000);
+            arm();
 
 
             telemetry.addData("leftPos: ", leftDrive.getCurrentPosition());
@@ -185,16 +184,16 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
         }
     }
 
-    private void arm(int armPos) {
+    private void arm() {
         if (opModeIsActive()) {
             armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            armMotor.setTargetPosition(armPos);
+            armMotor.setTargetPosition(MAX_ARM_POSITION);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             armMotor.setPower(FORWARD_SPEED);
         }
 
-        while (opModeIsActive() && armMotor.getCurrentPosition() <= (armPos - 50)) {
+        while (opModeIsActive() && armMotor.getCurrentPosition() <= (MAX_ARM_POSITION - ARM_POS_OFFSET)) {
                 telemetry.addData("ArmPos: ", armMotor.getCurrentPosition());
                 telemetry.update();
         }
@@ -209,7 +208,7 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
         armMotor.setPower(FORWARD_SPEED);
         armMotor.setTargetPosition(0);
 
-        while (opModeIsActive() && armMotor.getCurrentPosition() >= 50) {
+        while (opModeIsActive() && armMotor.getCurrentPosition() >= ARM_POS_OFFSET) {
             telemetry.addData("ArmPos: ", armMotor.getCurrentPosition());
             telemetry.update();
         }
