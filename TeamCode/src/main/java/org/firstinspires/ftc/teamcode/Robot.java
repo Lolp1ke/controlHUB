@@ -63,8 +63,6 @@ public class Robot extends OpMode {
             handServo.setPosition(0);
         }
     }
-    double relativeLeft;
-    double relativeRight;
     private void initDrive() {
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
@@ -72,16 +70,13 @@ public class Robot extends OpMode {
         leftDrive.setTargetPosition(0);
         rightDrive.setTargetPosition(0);
 
-        relativeLeft = leftDrive.getCurrentPosition();
-        relativeRight = rightDrive.getCurrentPosition();
-
         leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         rightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
     }
     private void initArm() {
         armMotor = hardwareMap.get(DcMotor.class, "arm");
 
-        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
     }
     private void initHand() {
         handServo = hardwareMap.get(Servo.class, "hand_servo");
