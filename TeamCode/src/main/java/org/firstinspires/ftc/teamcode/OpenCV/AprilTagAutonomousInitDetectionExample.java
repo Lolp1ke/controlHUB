@@ -27,6 +27,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -42,14 +43,15 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
 {
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
-    private DcMotor         leftDrive   = null;
-    private DcMotor         rightDrive  = null;
+    private DcMotor leftDrive = null;
+    private DcMotor rightDrive = null;
 
     private DcMotor armMotor = null;
-    private ElapsedTime     runtime = new ElapsedTime();
+    private Servo hand_servo = null;
+    private ElapsedTime runtime = new ElapsedTime();
 
-    static final double     FORWARD_SPEED = 0.6;
-    static final double     TURN_SPEED    = 0.5;
+    static final double FORWARD_SPEED = 0.6;
+    static final double TURN_SPEED = 0.5;
     static final double FEET_PER_METER = 3.28084;
     double fx = 578.272;
     double fy = 578.272;
@@ -88,11 +90,15 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
 
         leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+
         armMotor = hardwareMap.get(DcMotor.class, "arm");
+        hand_servo = hardwareMap.get(Servo.class, "hand_servo");
 
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
-        armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        hand_servo.setPosition(0);
 
         telemetry.addData("Status", "Ready to run");
         telemetry.update();
@@ -136,7 +142,6 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
             } // logging data
 
             telemetry.update();
-            sleep(20);
         }
 
         if(tagOfInterest != null) {
@@ -152,11 +157,11 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
         while (opModeIsActive()) {
             if (tagOfInterest != null) {
                 if (tagOfInterest.id == Left) {
-                    encoderDrive(FORWARD_SPEED, 1.8, 1.8, 5);
-                    encoderDrive(TURN_SPEED, -1, 1, 5);
-                    encoderDrive(FORWARD_SPEED, 0.4, 0.4, 5);
+//                    encoderDrive(FORWARD_SPEED, 1.8, 1.8, 5);
+//                    encoderDrive(TURN_SPEED, -1, 1, 5);
+//                    encoderDrive(FORWARD_SPEED, 0.4, 0.4, 5);
 
-                    arm(2000);
+                    arm(2);
                     break;
                 } else if (tagOfInterest.id == Middle) {
                     encoderDrive(FORWARD_SPEED, 1.5, 1.5, 5);
@@ -168,6 +173,8 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
                     break;
                 }
             }
+
+            arm(2000);
 
 
             telemetry.addData("leftPos: ", leftDrive.getCurrentPosition());
@@ -181,17 +188,35 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
     private void arm(int armPos) {
         if (opModeIsActive()) {
             armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            armMotor.setTargetPosition(armPos);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            armMotor.setTargetPosition((int)(armPos * COUNTS_PER_INCH * METER_TO_INCHES));
 
-            armMotor.setPower(1);
+            armMotor.setPower(FORWARD_SPEED);
         }
 
-        while (opModeIsActive() && armPos <= armMotor.getCurrentPosition()) {
+        while (opModeIsActive() && armMotor.getCurrentPosition() <= (armPos - 50)) {
+                telemetry.addData("ArmPos: ", armMotor.getCurrentPosition());
+                telemetry.update();
+        }
+        armMotor.setPower(0);
+
+        sleep(1000);
+        hand_servo.setPosition(0.5);
+        sleep(1000);
+        hand_servo.setPosition(0);
+        sleep(2000);
+
+        armMotor.setPower(FORWARD_SPEED);
+        armMotor.setTargetPosition(0);
+
+        while (opModeIsActive() && armMotor.getCurrentPosition() >= 50) {
             telemetry.addData("ArmPos: ", armMotor.getCurrentPosition());
+            telemetry.update();
         }
 
         armMotor.setPower(0);
+        sleep(2000);
+
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
