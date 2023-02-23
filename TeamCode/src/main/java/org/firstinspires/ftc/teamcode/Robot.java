@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "VZHUH VZHUH")
@@ -60,17 +59,21 @@ public class Robot extends OpMode {
     private void hand() {
         if (gamepad2.a) {
             handServo.setPosition(0.5);
-        }
-        else if (gamepad2.b) {
+        } else if (gamepad2.b) {
             handServo.setPosition(0);
         }
     }
+    double relativeLeft;
+    double relativeRight;
     private void initDrive() {
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
 
         leftDrive.setTargetPosition(0);
         rightDrive.setTargetPosition(0);
+
+        relativeLeft = leftDrive.getCurrentPosition();
+        relativeRight = rightDrive.getCurrentPosition();
 
         leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         rightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
