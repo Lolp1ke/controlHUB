@@ -12,15 +12,9 @@ public class RobotAutoDriveByEncoder_Linear extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    // Calculate the COUNTS_PER_INCH for your specific drive train.
-    // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
-    // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
-    // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
-    // This is gearing DOWN for less speed and more torque.
-    // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double COUNTS_PER_MOTOR_REV = 336;    // eg: TETRIX Motor Encoder
-    static final double DRIVE_GEAR_REDUCTION = 12 ;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 3.54;     // For figuring circumference
+    static final double COUNTS_PER_MOTOR_REV = 336;// 2240 186.(6)
+    static final double DRIVE_GEAR_REDUCTION = 12 ;
+    static final double WHEEL_DIAMETER_INCHES = 3.54;
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double DRIVE_SPEED = 0.8;
     static final double TURN_SPEED = 0.5;
@@ -38,6 +32,7 @@ public class RobotAutoDriveByEncoder_Linear extends LinearOpMode {
 
         leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
         telemetry.addData("Starting at",  "%7d :%7d",
                 leftDrive.getCurrentPosition(),

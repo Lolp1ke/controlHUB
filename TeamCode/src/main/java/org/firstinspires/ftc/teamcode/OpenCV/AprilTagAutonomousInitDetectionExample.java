@@ -41,43 +41,25 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
 {
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
-
-
-
-
-
-    /* Declare OpMode members. */
     private DcMotor         leftDrive   = null;
     private DcMotor         rightDrive  = null;
-
     private ElapsedTime     runtime = new ElapsedTime();
-
 
     static final double     FORWARD_SPEED = 0.6;
     static final double     TURN_SPEED    = 0.5;
-
-
-
-
-
-
-
     static final double FEET_PER_METER = 3.28084;
-
-    // Lens intrinsics
-    // UNITS ARE PIXELS
-    // NOTE: this calibration is for the C920 webcam at 800x448.
-    // You will need to do your own calibration for other configurations!
     double fx = 578.272;
     double fy = 578.272;
     double cx = 402.145;
     double cy = 221.506;
-
-    // UNITS ARE METERS
     double tagsize = 0.166;
 
-    //int ID_TAG_OF_INTEREST = 18; // Tag ID 18 from the 36h11 family
+    static final double COUNTS_PER_MOTOR_REV = 22;
 
+    static final double METER_TO_INCHES = 39.3701;
+    static final double DRIVE_GEAR_REDUCTION = 12;
+    static final double WHEEL_DIAMETER_INCHES = 3.54;
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
     int Left=17;
     int Right=18;
@@ -87,15 +69,13 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
     AprilTagDetection tagOfInterest = null;
 
     @Override
-    public void runOpMode()
-    {
+    public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
 
         camera.setPipeline(aprilTagDetectionPipeline);
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened()
             {
@@ -103,188 +83,127 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
             }
 
             @Override
-            public void onError(int errorCode)
-            {
-
-            }
+            public void onError(int errorCode) {}
         });
 
         telemetry.setMsTransmissionInterval(50);
 
-
-
-        // Initialize the drive system variables.
         leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
 
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        // Send telemetry message to signify robot waiting;
         telemetry.addData("Status", "Ready to run");    //
         telemetry.update();
 
-
-        /*
-         * The INIT-loop:
-         * This REPLACES waitForStart!
-         */
-        while (!isStarted() && !isStopRequested())
-        {
+        while (!isStarted() && !isStopRequested()) {
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
-            if(currentDetections.size() != 0)
-            {
+            if(currentDetections.size() != 0) {
                 boolean tagFound = false;
 
-                for(AprilTagDetection tag : currentDetections)
-                {
-                    if(tag.id == Left || tag.id == Right || tag.id == Middle)
-                    {
+                for(AprilTagDetection tag : currentDetections) { // searching for qr code
+                    if(tag.id == Left || tag.id == Right || tag.id == Middle) {
                         tagOfInterest = tag;
                         tagFound = true;
-                        break;
+                        break; // leaving from loop after finding
                     }
                 }
 
-                if(tagFound)
-                {
+                if(tagFound) {
                     telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
                     tagToTelemetry(tagOfInterest);
-                }
-                else
-                {
+                } else {
                     telemetry.addLine("Don't see tag of interest :(");
 
-                    if(tagOfInterest == null)
-                    {
+                    if(tagOfInterest == null) {
                         telemetry.addLine("(The tag has never been seen)");
-                    }
-                    else
-                    {
+                    } else {
                         telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
                         tagToTelemetry(tagOfInterest);
                     }
                 }
-
-            }
-            else
-            {
+            } else {
                 telemetry.addLine("Don't see tag of interest :(");
 
-                if(tagOfInterest == null)
-                {
+                if(tagOfInterest == null) {
                     telemetry.addLine("(The tag has never been seen)");
-                }
-                else
-                {
+                } else {
                     telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
                     tagToTelemetry(tagOfInterest);
                 }
-
-            }
+            } // logging data
 
             telemetry.update();
             sleep(20);
         }
 
-        /*
-         * The START command just came in: now work off the latest snapshot acquired
-         * during the init loop.
-         */
-
-        /* Update the telemetry */
-        if(tagOfInterest != null)
-        {
+        if(tagOfInterest != null) {
             telemetry.addLine("Tag snapshot:\n");
             tagToTelemetry(tagOfInterest);
             telemetry.update();
-        }
-        else
-        {
+        } else {
             telemetry.addLine("No tag snapshot available, it 1was never sighted during the init loop :(");
             telemetry.update();
         }
 
 
-
-
-
-        /* Actually do something useful */
-
-
-
-
-        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
         while (opModeIsActive()) {
-            //sleep(20);
-            if(tagOfInterest == null || tagOfInterest.id == Left){
-                // Step 2:  Spin right for 1.3 seconds
-                leftDrive.setPower(-TURN_SPEED);
-                rightDrive.setPower(TURN_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 1.3)) {
-                    telemetry.addData("Path", "Leg 2: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
+            if (tagOfInterest != null) {
+                if (tagOfInterest.id == Left) {
+                    encoderDrive(FORWARD_SPEED, 1, 1, 5);
+                    break;
+                } else if (tagOfInterest.id == Middle) {
+                    encoderDrive(FORWARD_SPEED, 1, 1, 5);
+                    break;
+                } else if (tagOfInterest.id == Right) {
+                    encoderDrive(FORWARD_SPEED, 1, 1, 5);
+                    break;
                 }
-
-                // Step 1:  Drive forward for 3 seconds
-                leftDrive.setPower(FORWARD_SPEED);
-                rightDrive.setPower(FORWARD_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
-
-                break;
             }
-            else if(tagOfInterest.id == Middle){
 
-                // Step 1:  Drive forward for 3 seconds
-                leftDrive.setPower(FORWARD_SPEED);
-                rightDrive.setPower(FORWARD_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
-                break;
-            }
-            else if (tagOfInterest.id == Right){
-                // Step 2:  Spin right for 1.3 seconds
-                leftDrive.setPower(TURN_SPEED);
-                rightDrive.setPower(-TURN_SPEED);
-                runtime.reset();
-                while (opModeIsActive() && (runtime.seconds() < 1.3)) {
-                    telemetry.addData("Path", "Leg 2: %4.1f S Elapsed", runtime.seconds());
-                    telemetry.update();
-                }
 
-//                leftDrive.setPower(FORWARD_SPEED);
-//                rightDrive.setPower(FORWARD_SPEED);
-//                runtime.reset();
-//                while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-//                    telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-//                    telemetry.update();
-//                }
+            telemetry.addData("leftPos: ", leftDrive.getCurrentPosition());
+            telemetry.addData("leftPosT: ", leftDrive.getTargetPosition());
 
-                forward();
-                break;
-            }
+            telemetry.addData("rightPos: ", rightDrive.getCurrentPosition());
+            telemetry.addData("rightPosT: ", rightDrive.getTargetPosition());
         }
     }
 
-    private void forward() {
-        leftDrive.setPower(FORWARD_SPEED);
-        rightDrive.setPower(FORWARD_SPEED);
-        runtime.reset();
-        while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-            telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-            telemetry.update();
+    public void encoderDrive(double speed, double leftMeters, double rightMeters, double timeoutS) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        if (opModeIsActive()) {
+            newLeftTarget = leftDrive.getCurrentPosition() + (int)(leftMeters * COUNTS_PER_INCH * METER_TO_INCHES); // converting inches to meters
+            newRightTarget = rightDrive.getCurrentPosition() + (int)(rightMeters * COUNTS_PER_INCH * METER_TO_INCHES);
+
+            leftDrive.setTargetPosition(newLeftTarget); // setting target place
+            rightDrive.setTargetPosition(newRightTarget);
+
+            leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION); // launching motors
+            rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            runtime.reset();
+            leftDrive.setPower(Math.abs(speed));
+            rightDrive.setPower(Math.abs(speed));
+
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (leftDrive.isBusy() && rightDrive.isBusy())) {
+
+                telemetry.addData("Running to",  " %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Currently at",  " at %7d :%7d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
+                telemetry.update();
+            }
+
+            leftDrive.setPower(0);
+            rightDrive.setPower(0);
+
+            leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
 
