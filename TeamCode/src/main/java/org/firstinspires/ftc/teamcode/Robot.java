@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "VZHUH VZHUH")
 
@@ -18,6 +17,9 @@ public class Robot extends OpMode {
 
     double wheelReducter = 0.6;
     double armReducter = 1;
+    double armPower = 0;
+
+    static final double MAX_ARM_POS = 228;
 
     private void drive() {
         double leftWheel = -gamepad1.left_stick_y * wheelReducter;
@@ -39,7 +41,7 @@ public class Robot extends OpMode {
         telemetry.addData("wheelReducter: ", "%.2f", wheelReducter);
     }
     private void arm() {
-        double armPower = ((gamepad2.left_stick_y + gamepad2.right_stick_y) / 2) * armReducter;
+        armPower = ((gamepad2.left_stick_y + gamepad2.right_stick_y) / 2) * armReducter;
 
         if (gamepad2.right_bumper) {
             armReducter = 0.8;
@@ -49,7 +51,25 @@ public class Robot extends OpMode {
             armReducter = 0.6;
         }
 
+//        if (armMotor.getCurrentPosition() >= -MAX_ARM_POS) {
+//            armMotor.setPower(armPower);
+//        }
+//        if (armMotor.getCurrentPosition() > -10) {
+//            armPower *= -1;
+//            armMotor.setPower(armPower);
+//        } else if (armMotor.getCurrentPosition() <= -MAX_ARM_POS) {
+//            armPower *= -1;
+//            armMotor.setPower(armPower);
+//        }
+        if ((armMotor.getCurrentPosition() > 0 && armPower > 0) || armMotor.getCurrentPosition() <= -MAX_ARM_POS) {
+            armPower *= -1;
+        }
+//        if (armMotor.getCurrentPosition() <= -MAX_ARM_POS) {
+//            armPower *= -1;
+//        }
+
         armMotor.setPower(armPower);
+
 
         telemetry.addData("armPos: ", armMotor.getCurrentPosition());
         telemetry.addData("arm: ", "%.2f", armPower);

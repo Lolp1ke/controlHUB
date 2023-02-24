@@ -52,7 +52,7 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode
     static final double FORWARD_SPEED = 0.6;
     static final double TURN_SPEED = 0.5;
     static final double FEET_PER_METER = 3.28084;
-    static final int MAX_ARM_POSITION = 2000;
+    static final int MAX_ARM_POSITION = 2400;
     static final int ARM_POS_OFFSET = 100;
     double fx = 578.272;
     double fy = 578.272;
