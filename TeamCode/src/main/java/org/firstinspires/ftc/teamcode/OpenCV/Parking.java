@@ -17,10 +17,12 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 
-@Autonomous(name = "Autonomous parking encoder")
-public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
+@Autonomous(name = "Only Parking")
+public class Parking extends LinearOpMode
+{
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
+
     private DcMotor leftDrive = null;
     private DcMotor rightDrive = null;
     private DcMotor armMotor = null;
@@ -30,13 +32,18 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
     static final double FORWARD_SPEED = 0.6;
     static final double TURN_SPEED = 0.5;
     static final double FEET_PER_METER = 3.28084;
-    static final int MAX_ARM_POSITION = 2400;
-    static final int ARM_POS_OFFSET = 100;
-    double fx = 578.272;
-    double fy = 578.272;
-    double cx = 402.145;
-    double cy = 221.506;
-    double tagsize = 0.166;
+
+    static final double fx = 578.272;
+    static final double fy = 578.272;
+    static final double cx = 402.145;
+    static final double cy = 221.506;
+    static final double tagSize = 0.166;
+
+    static final int Left = 16;
+    static final int Right = 18;
+    static final int Middle = 17;
+
+    static final int sleepMS = 2000;
 
     static final double COUNTS_PER_MOTOR_REV = 22;
     static final double METER_TO_INCHES = 39.3701;
@@ -44,17 +51,13 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
     static final double WHEEL_DIAMETER_INCHES = 3.54;
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
-    int Left=16;
-    int Right=18;
-    int Middle=17;
-
     AprilTagDetection tagOfInterest = null;
 
     @Override
     public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagSize, fx, fy, cx, cy);
 
         camera.setPipeline(aprilTagDetectionPipeline);
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
@@ -67,7 +70,7 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(50);
 
-        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
 
         armMotor = hardwareMap.get(DcMotor.class, "arm");
@@ -75,12 +78,20 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
 
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
         hand_servo.setPosition(0.8);
-
-        telemetry.addData("Status", "Ready to run");
-        telemetry.update();
 
         while (!isStarted() && !isStopRequested()) {
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
@@ -92,7 +103,7 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
                     if(tag.id == Left || tag.id == Right || tag.id == Middle) {
                         tagOfInterest = tag;
                         tagFound = true;
-                        break;
+                        break; // leaving from loop after finding
                     }
                 }
 
@@ -118,7 +129,7 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
                     telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
                     tagToTelemetry(tagOfInterest);
                 }
-            }
+            } // logging data
 
             telemetry.update();
         }
@@ -132,80 +143,52 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
             telemetry.update();
         }
 
+
         while (opModeIsActive()) {
             if (tagOfInterest != null) {
+                double forwardMove = 1.1;
+                double turn = 0.5;
+                double timeOut = 3.0;
+
                 if (tagOfInterest.id == Left) {
-                    encoderDrive(FORWARD_SPEED, -1.1, -1.1, 3);
-                    encoderDrive(FORWARD_SPEED, -0.5, 0.5, 3);
-                    encoderDrive(FORWARD_SPEED, -0.5, -0.5, 3);
-//                    sleep(500);
-//                    armUp();
-//                    sleep(500);
-//                    hand_servo.setPosition(0);
-//                    encoderDrive(FORWARD_SPEED, 0.5, 0.5, 3);
-//                    sleep(500);
-//                    armDown();
+                    encoderDrive(FORWARD_SPEED, -forwardMove, -forwardMove, timeOut);
+                    encoderDrive(TURN_SPEED, -turn, turn, timeOut);
+                    encoderDrive(FORWARD_SPEED, -forwardMove, -forwardMove, timeOut);
 
                     break;
                 } else if (tagOfInterest.id == Middle) {
-                    encoderDrive(FORWARD_SPEED, -1.1, -1.1, 3);
 
                     break;
                 } else if (tagOfInterest.id == Right) {
-                    encoderDrive(FORWARD_SPEED, -1.1, -1.1, 3);
-                    encoderDrive(FORWARD_SPEED, 0.5, -0.5, 3);
-                    encoderDrive(FORWARD_SPEED, -0.5, -0.5, 3);
 
                     break;
                 }
             }
-
-//            arm();
-
-
-            telemetry.addData("leftPos: ", leftDrive.getCurrentPosition());
-            telemetry.addData("leftPosT: ", leftDrive.getTargetPosition());
-
-            telemetry.addData("rightPos: ", rightDrive.getCurrentPosition());
-            telemetry.addData("rightPosT: ", rightDrive.getTargetPosition());
         }
     }
-
     private void armUp() {
+        int middleJ = 1500;
+        int lowJ = 1000;
+        int timeoutS = 3;
+
         if (opModeIsActive()) {
-            armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            armMotor.setTargetPosition(MAX_ARM_POSITION);
+            armMotor.setTargetPosition(-middleJ);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armMotor.setPower(Math.abs(0.6));
 
-            armMotor.setPower(FORWARD_SPEED);
-        }
+            runtime.reset();
+            while (opModeIsActive() && (runtime.seconds() < timeoutS) && (leftDrive.isBusy() && rightDrive.isBusy())) {
+                telemetry.addData("Currently at",  " at %7d", armMotor.getCurrentPosition());
+                telemetry.update();
+            }
 
-        while (opModeIsActive() && armMotor.getCurrentPosition() <= (MAX_ARM_POSITION - ARM_POS_OFFSET)) {
-            telemetry.addData("ArmPos: ", armMotor.getCurrentPosition());
-            telemetry.update();
+            armMotor.setPower(0);
+            armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(sleepMS);
         }
-        armMotor.setPower(0);
-        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-
-    private void armDown() {
-        if (opModeIsActive()) {
-            armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            armMotor.setTargetPosition(0);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            armMotor.setPower(FORWARD_SPEED);
-        }
-
-        while (opModeIsActive() && armMotor.getCurrentPosition() <= (MAX_ARM_POSITION - ARM_POS_OFFSET)) {
-            telemetry.addData("ArmPos: ", armMotor.getCurrentPosition());
-            telemetry.update();
-        }
-        armMotor.setPower(0);
-        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-    }
-    public void encoderDrive(double speed, double leftMeters, double rightMeters, double timeoutS) {
+    private void encoderDrive(double speed, double leftMeters, double rightMeters, double timeoutS) {
         int newLeftTarget;
         int newRightTarget;
 
@@ -234,9 +217,10 @@ public class AprilTagAutonomousInitDetectionExample extends LinearOpMode {
 
             leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(sleepMS);
         }
     }
-
     @SuppressLint("DefaultLocale")
     void tagToTelemetry(AprilTagDetection detection) {
         telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));

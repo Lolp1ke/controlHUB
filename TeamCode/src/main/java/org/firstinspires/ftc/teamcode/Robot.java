@@ -19,7 +19,7 @@ public class Robot extends OpMode {
     double armReducter = 1;
     double armPower = 0;
 
-    static final double MAX_ARM_POS = 228;
+    static final double MAX_ARM_POS = 2200;
 
     private void drive() {
         double leftWheel = -gamepad1.left_stick_y * wheelReducter;
@@ -51,22 +51,9 @@ public class Robot extends OpMode {
             armReducter = 0.6;
         }
 
-//        if (armMotor.getCurrentPosition() >= -MAX_ARM_POS) {
-//            armMotor.setPower(armPower);
-//        }
-//        if (armMotor.getCurrentPosition() > -10) {
-//            armPower *= -1;
-//            armMotor.setPower(armPower);
-//        } else if (armMotor.getCurrentPosition() <= -MAX_ARM_POS) {
-//            armPower *= -1;
-//            armMotor.setPower(armPower);
-//        }
         if ((armMotor.getCurrentPosition() > 0 && armPower > 0) || armMotor.getCurrentPosition() <= -MAX_ARM_POS) {
             armPower *= -1;
         }
-//        if (armMotor.getCurrentPosition() <= -MAX_ARM_POS) {
-//            armPower *= -1;
-//        }
 
         armMotor.setPower(armPower);
 
@@ -77,7 +64,8 @@ public class Robot extends OpMode {
     }
     private void hand() {
         if (gamepad2.a) {
-            handServo.setPosition(0.5);
+            handServo.setPosition(0.8
+            );
         } else if (gamepad2.b) {
             handServo.setPosition(0);
         }
